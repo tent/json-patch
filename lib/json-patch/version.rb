@@ -1,0 +1,3 @@
+class JsonPatch
+  VERSION = "0.0.1"
+end
