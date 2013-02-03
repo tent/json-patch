@@ -1,4 +1,4 @@
-# JsonPatch
+# JsonPatch [![Build Status](https://secure.travis-ci.org/tent/json-patch.png)](http://travis-ci.org/tent/json-patch)
 
 See [json patch specification](http://tools.ietf.org/html/draft-pbryan-json-patch-04) and [json pointer specification](http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03)
 
