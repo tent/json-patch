@@ -17,13 +17,13 @@ describe JsonPatch::HashPointer do
     it "should throw exception if key doesn't exist" do
       hash = { "a" => "foo" }
       pointer = described_class.new(hash, "a/b/c")
-      expect(lambda { pointer.value }).to raise_error(described_class::InvalidPointer)
+      expect(lambda { pointer.value }).to raise_error(described_class::InvalidPointerError)
     end
 
     it "should throw exception if array position is outsize index range" do
       hash = { "a" => ["foo", "bar", "baz"] }
       pointer = described_class.new(hash, "a/3")
-      expect(lambda { pointer.value }).to raise_error(described_class::InvalidPointer)
+      expect(lambda { pointer.value }).to raise_error(described_class::InvalidPointerError)
     end
   end
 
@@ -68,14 +68,14 @@ describe JsonPatch::HashPointer do
     it 'should throw exception if key does not exist' do
       hash = {}
       pointer = described_class.new(hash, "a")
-      expect( lambda { pointer.delete }).to raise_error(described_class::InvalidPointer)
+      expect( lambda { pointer.delete }).to raise_error(described_class::InvalidPointerError)
       expect(hash).to eq({})
     end
 
     it 'should throw exception if index of array does not exist' do
       hash = { "a" => { "b" => ["foo", "bar"] } }
       pointer = described_class.new(hash, "a/b/2")
-      expect( lambda { pointer.delete }).to raise_error(described_class::InvalidPointer)
+      expect( lambda { pointer.delete }).to raise_error(described_class::InvalidPointerError)
       expect(hash).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
   end
@@ -99,7 +99,7 @@ describe JsonPatch::HashPointer do
       hash = { "a" => { "b" => ["foo", "bar"] } }
       pointer = described_class.new(hash, "a/b/0")
       expect( lambda { pointer.move_to "a/b/c" } ).
-        to raise_error(described_class::InvalidPointer)
+        to raise_error(described_class::InvalidPointerError)
       expect(hash).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
   end
@@ -161,31 +161,31 @@ describe JsonPatch do
       object = { "a" => "foo" }
       patch_object = [{ "add" => "a/b/c", "value" => ["foo", "bar", "baz"] }]
       expect( lambda { JsonPatch.merge(object, patch_object) } ).
-        to raise_error(described_class::ObjectExists)
+        to raise_error(described_class::ObjectExistsError)
       expect(object["a"]).to eq("foo")
 
       object = { "a" => { "b" => "foo" } }
       patch_object = [{ "add" => "a/b/c", "value" => ["foo", "bar", "baz"] }]
       expect( lambda { JsonPatch.merge(object, patch_object) } ).
-        to raise_error(described_class::ObjectExists)
+        to raise_error(described_class::ObjectExistsError)
       expect(object["a"]).to eq("b" => "foo")
 
       object = { "a" => { "b" => { "c" => "foo" } } }
       patch_object = [{ "add" => "a/b/c", "value" => ["foo", "bar", "baz"] }]
       expect( lambda { JsonPatch.merge(object, patch_object) } ).
-        to raise_error(described_class::ObjectExists)
+        to raise_error(described_class::ObjectExistsError)
       expect(object["a"]).to eq("b" => { "c" => "foo" })
 
       object = { "a" => { "b" => { "c" => "foo" } } }
       patch_object = [{ "add" => "a/b/c/d/e/f/g", "value" => ["foo", "bar", "baz"] }]
       expect( lambda { JsonPatch.merge(object, patch_object) } ).
-        to raise_error(described_class::ObjectExists)
+        to raise_error(described_class::ObjectExistsError)
       expect(object["a"]).to eq("b" => { "c" => "foo" })
 
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "add" => "a/b/c/d/e/f/g", "value" => ["foo", "bar", "baz"] }]
       expect( lambda { JsonPatch.merge(object, patch_object) } ).
-        to raise_error(described_class::ObjectExists)
+        to raise_error(described_class::ObjectExistsError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
@@ -211,7 +211,7 @@ describe JsonPatch do
       object = { "a" => { "b" => {} } }
       patch_object = [{ "remove" => "a/b/c" }]
       expect( lambda { described_class.merge(object, patch_object) } ).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => {} } })
     end
 
@@ -227,7 +227,7 @@ describe JsonPatch do
         object = { "a" => { "b" => ["foo"] } }
         patch_object = [{ "remove" => "a/b/1" }]
         expect( lambda { described_class.merge(object, patch_object) } ).
-          to raise_error(described_class::ObjectNotFound)
+          to raise_error(described_class::ObjectNotFoundError)
         expect(object).to eq({ "a" => { "b" => ["foo"] } })
       end
     end
@@ -252,7 +252,7 @@ describe JsonPatch do
       object = { "a" => { "b" => {} } }
       patch_object = [{ "replace" => "a/b/c", "value" => "foo" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => {} } })
     end
 
@@ -260,7 +260,7 @@ describe JsonPatch do
       object = { "a" => [] }
       patch_object = [{ "replace" => "a/1", "value" => "bar" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => [] })
     end
   end
@@ -284,13 +284,13 @@ describe JsonPatch do
       object = { "a" => { "b" => { "c" => "foo" } } }
       patch_object = [{ "move" => "a/b/c/d", "to" => "/b" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => { "c" => "foo" } } })
 
       object = { "a" => { "b" => "foo" } }
       patch_object = [{ "move" => "a/b/c", "to" => "a" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => "foo" } })
     end
 
@@ -298,7 +298,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "move" => "a/b/2", "to" => "a/b/0" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
@@ -306,7 +306,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "move" => "a/b/0", "to" => "a/b/c" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
   end
@@ -330,13 +330,13 @@ describe JsonPatch do
       object = { "a" => { "b" => { "c" => "foo" } } }
       patch_object = [{ "copy" => "a/b/c/d", "to" => "/b" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => { "c" => "foo" } } })
 
       object = { "a" => { "b" => "foo" } }
       patch_object = [{ "copy" => "a/b/c", "to" => "a" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => "foo" } })
     end
 
@@ -344,7 +344,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "copy" => "a/b/2", "to" => "a/b/0" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
@@ -352,7 +352,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "copy" => "a/b/0", "to" => "a/b/c" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectExists)
+        to raise_error(described_class::ObjectExistsError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
   end
@@ -362,7 +362,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "test" => "a/c" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
@@ -370,7 +370,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "test" => "a/b/0", "value" => "chunkybacon" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
@@ -378,7 +378,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "test" => "a/b/3" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
@@ -386,7 +386,7 @@ describe JsonPatch do
       object = { "a" => { "b" => ["foo", "bar"] } }
       patch_object = [{ "test" => "a/b/0", "value" => "chunkybacon" }]
       expect(lambda { described_class.merge(object, patch_object) }).
-        to raise_error(described_class::ObjectNotFound)
+        to raise_error(described_class::ObjectNotFoundError)
       expect(object).to eq({ "a" => { "b" => ["foo", "bar"] } })
     end
 
